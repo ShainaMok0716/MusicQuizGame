@@ -93,6 +93,9 @@ public class GameManager : Singleton<GameManager>
     public void NextPlaylist() {
         SwitchToView(View.Welcome);
 
+        // unload unused assets
+        Resources.UnloadUnusedAssets();
+
         // for better ux: cached last played songs
         AssetsManager.Instance.CacheLastData();
 
