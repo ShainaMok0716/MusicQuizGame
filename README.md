@@ -30,10 +30,8 @@ Download song and image using System.Threading.Tasks with async & await
 
 ## Simple Cache logic
 
-you can cache the song if there will be duplicated song in different playlist
-
 1. playagain will not trigger redownload assets
-2. there is a maxCacheCnt in AssetsManager, you can customize how many songs you want to cache
+2. there is a maxCacheCnt in AssetsManager, you can customize how many songs you want to cache if there will be duplicated song in different playlist
 3. cache songs when player click "Next"
 
 ## Package Used
