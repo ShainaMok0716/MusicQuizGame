@@ -1,1 +1,6 @@
 Temp/
+.vs/
+.vsconfig
+Library
+Logs
+obj
