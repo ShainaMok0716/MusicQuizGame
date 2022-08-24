@@ -48,11 +48,13 @@ public class GameManager : Singleton<GameManager>
         // load music and image if playlistIdx id different from last time
         if(lastPlaylistIdx != playlistIdx)
         {
-            // for better UX: start after downloading the first song, other songs will be downlaoded asynchronous after the quiz started 
+            // There are two ways to load assets before start game
+            
+            // 1. only load the first song and start, other songs will be downlaoded asynchronous after the quiz started 
             // you can custom number of songs to pre download
             await AssetsManager.Instance.PreloadAssetsInPlaylist(gameData.currPlaylist, 0, 1);
 
-            // or you can start after downloading all songs by uncomment this:
+            // 2. start after downloading all songs by uncomment this:
             // await AssetsManager.Instance.PreloadAssetsInPlaylist(gameData.currPlaylist);
 
             // TODO: if network is really bad, we might need to show loading ui here
@@ -92,8 +94,7 @@ public class GameManager : Singleton<GameManager>
         SwitchToView(View.Welcome);
 
         // for better ux: cached last played songs
-        // uncomment the code if there will be duplicated sound in different playlist
-        // AssetsManager.Instance.CacheLastData();
+        AssetsManager.Instance.CacheLastData();
 
         // You can update the player score to server here
 

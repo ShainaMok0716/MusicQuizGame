@@ -1,27 +1,28 @@
 using Newtonsoft.Json;
-
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
-using UnityEngine.Jobs;
 
 public class AssetsManager : Singleton<AssetsManager>
 {
     // setting
-    public string jsonPath = "coding-test-frontend-unity";
+    private string jsonPath = "coding-test-frontend-unity";
+    private int maxCacheCnt = 8; // you can cache the song if there will be duplicated song in different playlist
 
-    // sound data - faster access in array rather than class
+    // song data - faster access using array rather than class
     public string[] arrSongID;
     public Texture[] arrTexture;
     public AudioClip[] arrAudioClip;
 
-    private string[] arrLastSongID;
-    private Texture[] arrLastTexture;
-    private AudioClip[] arrLastAudioClip;
-
+    // cached song data
+    private int nextCacheIdx = 0;
+    private string[] cachedSongID; 
+    private Texture[] cachedTexture;
+    private AudioClip[] cachedAudioClip;
 
     public Playlist[] GetPlaylist() {
         TextAsset jsonAssets = Resources.Load<TextAsset>(jsonPath);
@@ -29,28 +30,52 @@ public class AssetsManager : Singleton<AssetsManager>
     }
 
     public void CacheLastData() {
-        arrLastSongID = arrSongID;
-        arrLastTexture = arrTexture;
-        arrLastAudioClip = arrAudioClip;
+        if (maxCacheCnt > 0)
+        {
+            // cache the song data in current playlist
 
-        arrSongID = null;
-        arrTexture = null;
-        arrAudioClip = null;
+            if (cachedSongID == null)
+            {
+                cachedSongID = new string[maxCacheCnt];
+                cachedTexture = new Texture[maxCacheCnt];
+                cachedAudioClip = new AudioClip[maxCacheCnt];
+            }
+
+            for (int i = 0; i < arrSongID.Length; i++) {
+                if (GetCachedAseetsIdx(arrSongID[i]) == -1) {
+                    // if data is not cached before
+                    Debug.Log("Cache Song: " + arrSongID[i] + " at index " + nextCacheIdx);
+
+                    cachedSongID[nextCacheIdx] = arrSongID[i];
+                    cachedTexture[nextCacheIdx] = arrTexture[i];
+                    cachedAudioClip[nextCacheIdx] = arrAudioClip[i];
+                    nextCacheIdx++;
+                    if (nextCacheIdx > maxCacheCnt - 1)
+                        nextCacheIdx = 0;
+                }
+            }
+        }
     }
 
     public async Task PreloadAssetsInPlaylist(Playlist playlist, int startIdx = 0, int numOfSongs = -1)
     {
+        // clear last song data if start loading from index 0
+        if (startIdx == 0) {
+            arrSongID = null;
+            arrTexture = null;
+            arrAudioClip = null;
+        }
+
         int questionCnt = playlist.questions.Length;
         int endIdx = questionCnt - 1;
         if (numOfSongs == -1)
         {
             numOfSongs = questionCnt;
-        } else
-        {
+        } else {
             endIdx = startIdx + numOfSongs - 1;
         }
 
-        Debug.Log("PreloadAssetsInPlaylist Start... load " + numOfSongs + " song(s) from index " + startIdx + " to index " + endIdx);
+        Debug.Log("PreloadAssetsInPlaylist Start... load " + numOfSongs + " song(s) from index " + startIdx + " to index " + endIdx + ", maxCacheCnt:" + maxCacheCnt);
 
         List<Task> listTask = new List<Task>();
 
@@ -69,33 +94,23 @@ public class AssetsManager : Singleton<AssetsManager>
             int questionIdx = i;
 
             // for better ux: check if assets already loaded in last playlist, reuse if found
-            // you can uncomment the for loop checking if there will be duplicated song in different playlist
-            //if(arrLastSongID != null)
-            //{
-            //    // if there is last data
-            //    bool isFoundInLastData = false;
-            //    for (int j = 0; j < arrLastSongID.Length; j++)
-            //    {
-            //        if (playlist.questions[questionIdx].song.id == arrLastSongID[j])
-            //        {
-            //            arrSongID[questionIdx] = arrLastSongID[j];
-            //            arrTexture[questionIdx] = arrLastTexture[j];
-            //            arrAudioClip[questionIdx] = arrLastAudioClip[j];
-            //            isFoundInLastData = true;
-            //            Debug.Log("PreloadAssetsInPlaylist... song found in last data : " + arrLastSongID[j]);
-
-            //            // stop the loop if sound found
-            //            continue;
-            //        }
-            //    }
-
-            //    // skip if sound founded in last data
-            //    if (isFoundInLastData) continue;
-            //}
-
+            if (maxCacheCnt > 0)
+            {
+                int cachedIdx = GetCachedAseetsIdx(playlist.questions[questionIdx].song.id);
+                if (cachedIdx > -1)
+                {
+                    arrSongID[questionIdx] = cachedSongID[cachedIdx];
+                    arrTexture[questionIdx] = cachedTexture[cachedIdx];
+                    arrAudioClip[questionIdx] = cachedAudioClip[cachedIdx];
+                    // stop the loop if sound found in cached data
+                    continue;
+                }
+            }
+            
             // store the song id, we can reuse the loaded data if same song is used
             arrSongID[questionIdx] = playlist.questions[questionIdx].song.id;
 
+            // add dowload task to list
             listTask.Add(DownloadImageTask(playlist.questions[questionIdx].song.picture, arrTexture, questionIdx));
             listTask.Add(DonwloadAudioClipTask(playlist.questions[questionIdx].song.sample, arrAudioClip, questionIdx));
         }
@@ -114,6 +129,23 @@ public class AssetsManager : Singleton<AssetsManager>
         // start download the rest of songs
         if (startIdx + numOfSongs < questionCnt)
             PreloadAssetsInPlaylist(playlist, startIdx + numOfSongs, questionCnt - numOfSongs);
+    }
+
+    int GetCachedAseetsIdx(string songID) {
+        if (cachedSongID != null)
+        {
+            // if there is last data
+            for (int j = 0; j < cachedSongID.Length; j++)
+            {
+                if (songID == cachedSongID[j])
+                {
+                    Debug.Log("GetCachedAseetsIdx ... song found in cache data : " + cachedSongID[j]);
+                    // stop the loop if sound found
+                    return j;
+                }
+            }
+        }
+        return -1;
     }
 
     static async Task DownloadImageTask(string url, Texture[] texture, int idx) {
@@ -155,5 +187,4 @@ public class AssetsManager : Singleton<AssetsManager>
         audio[idx] = DownloadHandlerAudioClip.GetContent(www);
     }
 
-    
 }
