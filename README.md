@@ -1,7 +1,6 @@
 # MusicQuizGame
 
-A coding test by Shaina Mok
-Develop in Unity version 2020.3.30f1
+A coding test by Shaina Mok develop in Unity version 2020.3.30f1
 
 ## To Play
 
@@ -14,15 +13,29 @@ Press play in Unity
 Classic MVC architecture
 Everthing starts in GameManager.Start()
 
-Model - Struct (all data struct) - GameData (runtime data)
+Model
 
-View - WelcomeView (ui of welcome screen) - GameView (ui of game screen) - ResultView (ui of result screen) - PlaylistCellView (ui of prefab PlaylistCell)
+- Struct (all data struct)
+- GameData (runtime data)
 
-Controller - GameManager (store GameData and controll the game flow) - AssetsManager (store and download assets such as song and texture)
+View
 
-Prefab Used - PlaylistCell
+- WelcomeView (ui of welcome screen)
+- GameView (ui of game screen)
+- ResultView (ui of result screen)
+- PlaylistCellView (ui of prefab PlaylistCell)
 
-Super Class - Singleton
+Controller
+
+- GameManager (store GameData and controll the game flow) - AssetsManager (store and download assets such as song and texture)
+
+Prefab Used
+
+- PlaylistCell
+
+Super Class
+
+- Singleton
 
 ## Use of Multithreading
 
