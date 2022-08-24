@@ -11,7 +11,7 @@ public class AssetsManager : Singleton<AssetsManager>
 {
     // setting
     private string jsonPath = "coding-test-frontend-unity";
-    private int maxCacheCnt = 8; // you can cache the song if there will be duplicated song in different playlist
+    private int maxCacheCnt = 5; // you can cache the song if there will be duplicated song in different playlist
 
     // song data - faster access using array rather than class
     public string[] arrSongID;

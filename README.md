@@ -27,7 +27,8 @@ View
 
 Controller
 
-- GameManager (store GameData and controll the game flow) - AssetsManager (store and download assets such as song and texture)
+- GameManager (store GameData and controll the game flow)
+- AssetsManager (store and download assets such as song and texture)
 
 Prefab Used
 
@@ -44,7 +45,7 @@ Download song and image using System.Threading.Tasks with async & await
 ## Simple Cache logic
 
 1. playagain will not trigger redownload assets
-2. there is a maxCacheCnt in AssetsManager, you can customize how many songs you want to cache if there will be duplicated song in different playlist
+2. there is a maxCacheCnt in AssetsManager, you can customize number of songs you want to cache
 3. cache songs when player click "Next"
 
 ## Package Used
